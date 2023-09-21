@@ -236,3 +236,75 @@
 
     然后再通过npm publish 就可以更新包的版本
 
+## 模块的加载机制
+    模块会优先从缓存中加载：
+
+        模块在第一次加载后会被缓存，这意味着多次调用require()不会导致模块的代码被执行多次
+        
+        注意：不论是内置模块、用户自定义模块、害死第三方模块，他们都会优先从缓存中加载，从而提高模块的加载效率
+
+## 内置模块的加载机制
+    内置模块的加载优先级是最高的，即使node_modules目录下有同名的包，require('fs') 始终返回内置的fs模块
+
+## 自定义模块的加载机制
+    必须有路径标识符 ./ 或 ../ 否则node会把它当作内置模块或者第三方模块
+
+    如果导入时省略了扩展名 node 会以 js、json、ndoe 的顺序依次补全扩展名来进行加载
+
+## 第三方模块的加载机制
+    当nodeJS尝试从node_modules文件夹中查找第三方模块而没有找到的时候，会从当前文件的父目录开始逐次向上级目录查找node_modules下的模块，直到文件系统的根目录
+
+## 目录作为模块
+    如果在引入时使用目录作为模块，那么node会在目录下查找package.json文件，并寻找main属性，如果没有package.json或者main入口不存在或无法解析,node或试图加载目录下的index.js文件，如果还是没有，那么就会报错
+
+## Express框架
+    中文官网：http://www.expressjs.com.cn
+
+    Express 是基于Node.js平台，快速、开放、极简的web开发框架。
+
+    Express是基于http模块封装的，是专门用来创建Web服务器的。
+
+## 使用Express框架创建一个web服务器
+### 引入express
+```js
+const express = require('express')
+```
+
+### 创建web服务器
+```js
+const app = express()
+```
+
+### 启动web服务器
+```js
+app.listen(8081,() => {
+    console.log('express server running at http://127.0.0.1:8080')
+})
+```
+
+### 监听get或者post方法，并处理参数
+```js
+app.get('/user',(req,res) => {
+    console.log(req.query)
+    res.send({name: 'wzh',age: 24,gender: '男'})
+})
+
+app.post('/user',(req,res) => {
+    console.log(req.query)
+    res.send("请求成功")
+})
+```
+
+    req.query获取的是用户的传参,默认是空对象
+
+### 获取动态参数
+```js
+app.get('/user/:id',(req,res) => {
+    console.log(req.params)
+    res.send(req.params)
+})
+```
+
+    req.params默认是空对象
+
+    id是一个动态参数，用户再调用接口的时候在接口名后拼接/value后就可以在req.params里面获取到一个与id键值对的对象,id是名称并不固定，：是固定的
