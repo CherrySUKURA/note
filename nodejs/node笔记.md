@@ -165,6 +165,10 @@
 ## 全球最大的包共享平台
     https://www.npmjs.com/
 
+## nrm 包镜像管理工具
+    nrm ls 命令查看镜像地址
+    nrm use 镜像地址 切换镜像地址
+
 ## 包的结构与规范
     包必须以单独的目录存在
 
@@ -255,7 +259,7 @@
     当nodeJS尝试从node_modules文件夹中查找第三方模块而没有找到的时候，会从当前文件的父目录开始逐次向上级目录查找node_modules下的模块，直到文件系统的根目录
 
 ## 目录作为模块
-    如果在引入时使用目录作为模块，那么node会在目录下查找package.json文件，并寻找main属性，如果没有package.json或者main入口不存在或无法解析,node或试图加载目录下的index.js文件，如果还是没有，那么就会报错
+    如果在引入时使用目录作为模块，那么node会在目录下查找package.json文件，并寻找main属性，如果没有package.json或者main入口不存在或无法解析,node则会试图加载目录下的index.js文件，如果还是没有，那么就会报错
 
 ## Express框架
     中文官网：http://www.expressjs.com.cn
@@ -308,3 +312,72 @@ app.get('/user/:id',(req,res) => {
     req.params默认是空对象
 
     id是一个动态参数，用户再调用接口的时候在接口名后拼接/value后就可以在req.params里面获取到一个与id键值对的对象,id是名称并不固定，：是固定的
+
+## 托管静态资源
+    express提供了 express.static()，通过它就可以方便的创建一个静态资源服务器
+    
+    例如，将public目录下的图片、css文件、JavaScript文件对外开放访问
+
+```js
+app.use(express.static('public'))
+```
+
+    如果要托管多个静态资源的目录，就多次调用就好了
+
+    如果托管的文件夹内有同名文件，以先托管的为基准
+
+    在访问托管的文件夹内的文件时，路径上不需要加托管的文件夹名，如果想要加上一个路径前缀的话，如下
+
+```js
+app.use('/public',express.static('public'))
+```
+
+## nodemon热加载开发工具
+
+    安装：npm install -g nodemon 全局安装即可
+
+    使用：再启动项目时把node index命令替换为 nodemon index即可
+
+## express 路由
+    express的路由是一个客户端请求与服务器处理函数之间的映射关系
+
+    express中路由分3部分组成，分别是请求的类型，请求的URL地址，处理函数
+
+    如：
+```js
+app.method(path,function(){}) //method(类型) path(url地址) function(函数)
+```
+
+## 路由的匹配过程
+
+    每当有一个请求到达服务器之后，需要先经过路由的匹配，匹配成功后采后调用相应的处理函数。
+    
+    在匹配时，会按照路由的顺序进行匹配，如果请求类型和请求的URL同时匹配成功，在Express会将这次请求转交给对应的函数进行处理
+
+    路由匹配的注意点：
+
+        按照定义的先后顺序进行匹配
+
+        请求类型和请求的URL必须同时匹配成功
+
+## 路由的使用
+
+### 最简单的用法
+
+    直接挂在在app上
+
+```js
+const app = express()
+
+app.get('/',(req,res) => {
+    res.send("hello world")
+})
+
+app.post('/',(req,res) => {
+    res.send("hello world")
+})
+
+app.listen(80,() => {
+    console.log('express serve running at http://127.0.0.1')
+})
+```
