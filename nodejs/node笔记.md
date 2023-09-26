@@ -381,3 +381,103 @@ app.listen(80,() => {
     console.log('express serve running at http://127.0.0.1')
 })
 ```
+
+## 模块化路由
+    为了方便对路由进行模块化的管理，Express不建议将路由直接挂载到app上，而是推荐将路由抽离为单独的模块。
+
+    1、创建路由模块对应的js文件
+    
+    2、调用express.Router()函数创建路由对象
+
+```js
+const express = require('express')
+
+const router = express.Router()
+
+```
+
+    3、向路由对象上挂载具体的路由
+
+```js
+router.get('/list/user',(req,res) => {
+    res.send('get 请求成功')
+})
+
+router.post('/list/add',(req,res) => {
+    res.send('post 请求成功')
+})
+```
+
+    4、使用module.exports向外共享路由对象
+
+```js
+module.exports = router
+```
+
+    5、使用app.use()函数注册路由模块
+
+```js
+const express = require('express'),
+      router = require('./router/router'), 
+      app = express()
+
+app.use(router)
+
+app.listen(80,() => {
+    console.log("Express Server running at http://127.0.0.1")
+})
+```
+
+    注意：app.use() 函数的作用，就是来注册全局中间件
+
+## 为路由模块添加前缀
+
+```js
+app.use('/api',router) //访问路由需要前缀 如：/api/list/user
+```
+
+## 中间件的概念
+
+    中间件是业务处理中的处理环节
+
+## Express 中间件的调用流程
+    当一个请求到达Express的服务器之后，可以连续调用多个中间件，从而对这次请求进行预处理
+
+    流程： 客户端请求→中间件1→中间件2→中间件N→处理完毕响应这次请求→响应客户端
+
+## Express 中间件的格式
+
+    Express 的中间件，本质上就是一个function处理函数
+
+    中间件函数的形参列表中，必须包含next参数，而路由处理函数中至半酣req和res
+
+## next 函数的作用
+
+    next函数是实现多个中间件连续调用的关键，他表示把流转关系转到下一个中间件或路由。
+
+## 定义一个简单的中间件函数
+
+```js
+const express = require('express')
+
+const app = express()
+
+const mw = function(req,res,next){
+
+    console("这是一个中间件函数")
+
+    next() //放行
+}
+```
+
+## 全局生效的中间件
+
+    只需要调用app.use(mw)即可注册一个全局生效的中间件
+
+    注册后任何一个请求都会先进入中间件
+
+    如果注册中间件是给了一个路径的话，那么只有在url中有这个路径的请求会调用中间件
+
+## 中间件的作用
+
+    多个中间件之间，共享同一分req和res，基于这样的特性，我们可以在上游的中间件中，统一为req和res对象添加自定义的属性和方法，供下游的中间件或路由进行使用
