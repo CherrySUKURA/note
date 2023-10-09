@@ -481,3 +481,172 @@ const mw = function(req,res,next){
 ## 中间件的作用
 
     多个中间件之间，共享同一分req和res，基于这样的特性，我们可以在上游的中间件中，统一为req和res对象添加自定义的属性和方法，供下游的中间件或路由进行使用
+
+## 局部生效的中间件
+    不使用 app.use() 注册的中间件就是局部中间件
+
+```js
+const express = require('express')
+
+const app = express()
+
+const mw1 = function(req,res,next) {
+    console.log("局部生效")
+    next()
+}
+
+app.get('/',mw1,(req,res) => {//中间件会生效
+    res.send("request success")
+})
+
+app.get('/user',(req,res) => {//中间件不会生效
+    res.send("request success")
+})
+
+app.listen(80,() => {
+    console.log("express server running at http://127.0.0.1")
+})
+```
+
+## 定义多个局部生效的中间件
+
+```js
+const express = require('express')
+
+const app = express()
+
+const mw1 = function(req,res,next) {
+    console.log("局部生效")
+    next()
+}
+
+const mw2 = function(req,res,next) {
+    console.log("局部生效2")
+    next()
+}
+
+app.get('/',mw1,mw2,(req,res) => {//中间件会生效
+    res.send("request success")
+})
+//或者
+app.get('/',[mw1,mw2],(req,res) => {//中间件会生效
+    res.send("request success")
+})
+
+app.listen(80,() => {
+    console.log("express server running at http://127.0.0.1")
+})
+```
+
+## 中间件的使用注意事项
+    一定要在路由之前定义中间件
+    
+    客户端发送过来的请求，可以连续调用多个中间件进行处理
+
+    执行完中间件的业务代码之后，不要忘记调用next()函数
+
+    为了防止代码逻辑混乱，调用next()函数后不要再写额外的代码
+
+    连续调用多个中间件时，多个中间件之间，共享req和res对象
+
+## 中间件的分类
+    Express官方把常见的中间件用法，分成5大类，分别是：
+
+        1、应用级别的中间件
+
+            通过app.use()或app.post()或app.get(),绑定到app实例上的中间件
+
+        2、路由级别的中间件
+
+            绑定到express.Router()实例上的中间件叫做路由级别的中间件
+
+        3、错误级别的中间件
+
+            专门用来捕获整个项目中发生的异常错误，从而防止项目异常崩溃的问题
+
+            格式：必须由4个形参，形参顺序从前到后分别是(err,req,res,next)
+
+            错误中间件一定放在所有路由的后面
+
+```js
+            const express = require('express'),
+                app = express()
+
+            app.get('/user',(req,res) => {
+                //人为制造错误
+                throw new Error("服务器内部错误")
+                res.send("Home Page")
+            })
+
+            //定义错误级别的中间件，捕获整个项目的异常错误，从而防止程序的崩溃
+            app.use((err,req,res,next) => {
+                console.log('发生错误' + err.message)
+                res.send('Error' + err.message)
+            })
+
+            app.listen(80,() => {
+                console.log("express server running at http://127.0.0.1")
+            })
+```
+
+        4、Express内置的中间件
+
+            express 4.16.0 版本开始就内置了 3 个常用的中间件
+
+            1、express.static 快速托管静态资源的中间件（无兼容性）
+
+            2、express.json 解析JSON格式的请求体数据(有兼容性，尽在 4.16.0+ 版本可用)
+
+```js
+                //配置解析 application/json 格式数据的内置中间件
+                app.use(express.json())
+```
+
+            3、express.urlencoded 解析URL-encoded 格式的请求体数据(有兼容性，尽在 4.16.0+ 版本可用)
+
+```js
+                //配置解析 application/x-www-form-urlencoded 格式的数据的内置中间件
+                app.use(express.urlencoded({ extended: false }))
+```
+
+        5、第三方的中间件
+
+            npm i 后 require引入然后时候app.use()注册即可
+
+## 自定义模块
+    例：模拟一个类似express.urlencoded的中间件，来解析post提交到服务器的表单数据
+
+    1、定义中间件
+
+    2、监听req的data事件
+        
+        监听data事件来获取客户端发送到服务器的数据，如果数据比较大无法一次发送完毕，客户端会把数据切割后分批发送，所以data事件可能会触发很多次，每一次触发所获取到的数据只是一部分，需要手动拼接
+
+        通过
+```js
+            let str = ''
+            req.on('data',(chunk) => {
+                str += chunk
+            })
+```
+        来监听data事件
+
+    3、监听req的end事件
+
+       当请求体数据接收完毕后，会自动触发end事件，一次可以在end事件中拿到并处理完整的请求体数据
+
+    4、使用querystring模块解析请求体数据
+
+        nodeJS内置了一个querystring模块，专门用来处理查询字符串，通过这个模块提供呃parse()，可以轻松把查询字符串解析成对象格式
+
+```js
+                const  querystring = require('querystring')
+                
+                //监听end事件拿到完整的请求体数据
+                req.on('end',() => {
+                    //处理完整的请求体数据，把字符串格式的请求体数据解析为对象格式
+                    str = querystring.parse(str)
+                })
+```
+
+    5、将解析出来的数据对象挂载为req.body
