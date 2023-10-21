@@ -822,4 +822,10 @@ app.use(cors())
 
         每个表中具体存储哪些信息，由字段来决定
 
-        表中的行，代表每一条具体的数据
+        表中的行，代表每一条具体的数据  
+
+## MySQL Server 和 MySQL Workbench
+
+    MySQL Server：用来存储数据和服务的软件
+
+    MySQL Workbench：可视化的MySQL管理工具
