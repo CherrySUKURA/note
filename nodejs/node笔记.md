@@ -829,3 +829,179 @@ app.use(cors())
     MySQL Server：用来存储数据和服务的软件
 
     MySQL Workbench：可视化的MySQL管理工具
+
+## 字段的数据类型
+
+    int 整数
+
+    varchar(len) 字符串
+
+    tinyint(1) 布尔值
+
+## 字段的特殊标识
+
+    PK(primary Key) 主键、唯一标识
+
+    NN(Not Null) 值不允许为空
+
+    UQ(Unique) 值唯一
+
+    AI(Auto Increment) 值自动增长
+
+## 使用SQL管理数据库
+
+### 什么是SQL
+
+    SQL(英文全称：Structured Query Language)是结构化查询语言，专门用来访问和处理数据库的编程语言。能够让我们以编程的形式，操作数据库里面的数据
+
+    三个关键点
+
+        SQL是一门数据库编程语言
+
+        使用SQL语言编写出来的代码，叫做SQL语句
+
+        SQL语言只能在关系型数据库库中使用(例如MySQL、Oracle、SQL Server)。非关系型数据库(例如Mongodb)不支持SQL语言
+
+## SQL需要掌握的四种语法
+
+    where条件、and和or运算符、order by排序、count(*)函数
+
+## SQL的SELECT语句
+
+    SELECT语句用于从表中拆线呢数据。执行结果被存储在一个结果表中(成为结果集)。语法格式如下：
+
+```SQL
+ -- 这是注释
+ -- 从 FROM 指定的【表中】，查询出【所有的】数据。 * 表示【所有的】
+ SELECT * FROM 表名称
+
+ -- 从FROM指定的【表中】，查询出指定列名称(字段)的数据
+ SELECT 列名称 FROM 表名称
+```
+
+    注意：SQL语句中的关键字对大小写不敏感
+
+## SQL的 INSERT INTO 语句
+
+    INSERT INTO语句用来向数据表中插入新的数据行，语法格式如下：
+
+```sql
+ -- 语法解读：向指定的表中，插入如下几列数据，列的值通过values 指定
+ -- 注意：列和值要一一对应，多个列和多个值之间，使用英文的逗号分隔
+ INSERT INTO table_name (列一,列二,...) VALUES (值一,值二,...) 
+```
+
+## SQL的UPDATE语句
+
+    Update语句用于修改表中的数据。语法格式如下：
+
+```sql
+-- 语法解读：
+-- 1. 用UPDATE指定要更新那个表中的数据
+-- 2. 用SET指定列对应的数值
+-- 3. 用WHERE指定更新的条件
+
+UPDATE 表名称 SET 列名称 = 新值 WHERE 列名称 = 某值
+```
+
+    更新某一行的若干列：
+
+```sql
+-- 使用逗号进行分隔即可
+
+UPDATE 表名称 SET 列名称 = 新值,列名称 = 新值 WHERE 列名称 = 某值
+```
+
+## SQL 的 DELETE 语句
+
+# __注意：不要忘记加where语句，否则等着跑路吧__
+
+```sql
+DELETE FROM 表名称 WHERE 列名称 = 某值
+```
+
+## SQL的WHERE子句
+
+    WHERE子句用于限定选择的标准。在SELECT、UPDATE、DELETE语句中，皆可使用WHERE子句来限定选择的标准
+
+    可以在WHERE子句中使用的运算符
+
+    =、<>或!=(都是不等于)、>、<、>=、<=、BETWEEN(在某个范围内)、LIKE(搜索某种模式)
+
+    BETWEEN 需要和and连用 取用范围内的值（包括两端）
+
+    LIKE 后可以跟着通配符和正则表达式
+
+```sql
+ select * from users where status = 0
+
+ select * from users where id > 2
+
+ select * from users where id != 3
+
+ select * from users where id between 1 and 2
+```
+
+## SQL的AND和OR运算符
+
+    如字面意义是和、或的意思
+
+```sql
+-- 获取id为一并且status为0的数据
+select * from users where id = 1 and status = 0
+-- 获取id为一或status为0的数据,满足其一即可
+select * from users where id = 1 or status = 0
+```
+
+## SQL的ORDERR BY 语句
+
+    ORDER BY语句用于根据指定的列对结果集进行排序。
+
+    ORDER BY语句默认按照升序对记录进行排序。
+
+    或者使用asc关键字也可以
+
+    如果您希望按照降序对记录进行排序，可以使用DESC关键字
+
+```sql
+ --对users表中的数据，按照status字段进行升序和降序的排序 
+
+ -- 升序 如下两条是等价的 asc关键字代表升序
+ select * from users order by status;
+ select * from users order by status asc;
+
+ -- 降序 desc代表降序
+ select * from users order by status desc;
+```
+
+    ORDER BY 多重排序：使用逗号对条件进行分隔即可进行多重排序
+
+```sql
+-- 对user表中的数据，先按照status进行降序排序，然后在按照username进行升序排序
+select * from users order by status desc , username asc;
+```
+
+## SQL的COUNT(*)函数
+
+    COUNT(*)函数用于返回查询结果的总数据条数
+
+```sql
+ -- 查询users表中status = 0 的条数 
+ select count(*) from users where status = 0;
+```
+
+    使用AS关键字为列设置别名
+
+```sql
+ -- 将查询出来的列名称设置为total
+ select count(*) as total from users where status = 0;
+ -- 使用逗号分隔可以同时设置多个列的别名 
+ select username as uname , password as pwd from users;
+```
+未设置别名
+
+![Alt text](image-2.png)
+
+设置别名后
+
+![Alt text](image-1.png)
