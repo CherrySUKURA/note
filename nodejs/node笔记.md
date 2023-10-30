@@ -1005,3 +1005,24 @@ select * from users order by status desc , username asc;
 设置别名后
 
 ![Alt text](image-1.png)
+
+## 在项目中操作数据库的步骤
+
+    安装MYSQL数据库的第三方模块
+
+    通过MYSQL模块连接到MYSQL数据库
+
+```js
+    // 导入mysql模块
+    const mysql = require("mysql");
+
+    // 建立与mysql数据库的连接
+    const db = mysql.createPool({
+        host: '127.0.0.1',      // 数据库的IP地址
+        user: "root",           // 登录数据库的账号
+        password: "admin123",   // 登录数据库的密码
+        database: "my_db_01"    // 指定要操作的数据库
+    })
+```
+
+    通过MYSQL模块执行SQL语句
