@@ -1026,3 +1026,46 @@ select * from users order by status desc , username asc;
 ```
 
     通过MYSQL模块执行SQL语句
+
+## 查询和插入数据
+
+    查询：
+```js
+        //查询users表中的所有数据
+        db.query("SELECT * FROM users",(err,results) => {
+            if(err) return console.log(err.message)
+
+            console.log(results)
+        })
+```
+
+    插入：
+```js
+        const user = { username: 'fwz', password: 'fwz'}, //定义要插入的数据
+        sqlStr = "INSERT INTO users (username,password) VALUES (?,?)" //书写SQL语句，？是占位符，在插入时在参数中指定要插入的值
+        //第二个参数中的值与？按顺序一一对应
+        db.query(sqlStr,[user.username,user.password],(err,results) => {
+            if(err) return console.log(err.message)
+            //affectRows：sql语句影响的行数，为1证明插入了一行
+            if(results.affectedRows === 1){
+            console.log("插入数据成功")
+            }
+        })
+```
+    注意：如果执行的是一个查询语句，results返回的是一个数组，如果是一个插入语句，返回的是对象
+
+## 插入数据的便携方式
+
+    如果有很多的字段需要插入，并且字段与表中的字段一一对应，那么就可以使用：
+
+```js
+    const newUser = { username: "cst",password: "cst" },
+        newSqlStr = "insert into newUsers set ?"
+
+        db.query(newSqlStr,newUser,(err,results) => {
+            if(err) return console.log(err.message)
+            if(results.affectedRows === 1){
+            console.log("插入数据成功1")
+            }
+        })
+```
