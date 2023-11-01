@@ -1069,3 +1069,51 @@ select * from users order by status desc , username asc;
             }
         })
 ```
+
+## 更新数据
+    基本与插入没有区别
+```js
+      user = {username: 'lsh',password: 'lsh',id: 5},
+      sqlStr = "update users set username = ?,password = ?,id = ? where id = 18"
+
+      db.query(sqlStr,[user.username,user.password,user.id],(err,results) => {
+        if(err) return console.log(err.message)
+
+        if(results.affectedRows ===1 ) console.log("更新成功")
+      })
+
+```
+    便捷写法
+```js
+      user = {username: 'lsh1',password: 'lsh1',id: 5},
+      sqlStr = "update users set ? where id = 18"
+
+      db.query(sqlStr,user,(err,results) => {
+        if(err) return console.log(err.message)
+
+        if(results.affectedRows ===1 ) console.log("更新成功")
+      })
+```
+
+## 删除数据
+    在删除数据时，推荐根据id这样的为一标识，来删除对应的数据
+
+```js
+const deleteStr = "delete from users where id = ?"
+      //如果sql语句中有多个占位符？，就需要使用数组为每个占位符指定具体的值
+      //如果只有一个就可以省略数组
+      db.query(deleteStr,19,(err,results) => {
+        if(err) return console.log(err.message)
+
+        if(results.affectedRows === 1) {
+            console.log("删除成功")
+        }
+      })
+```
+
+## 标记删除
+    使用delete语句，会真正的把数据从表中删除掉，为了保险起见，推荐使用标记删除形式，来模拟删除的动作
+
+    标记删除就是在表中设置类似于status的字段，来标记当前这条数据是否被删除
+
+    当用户执行删除的动作时，不是使用delete来删除数据，而是使用update来改变数据对应的删除标记。
