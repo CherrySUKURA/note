@@ -1117,3 +1117,367 @@ const deleteStr = "delete from users where id = ?"
     标记删除就是在表中设置类似于status的字段，来标记当前这条数据是否被删除
 
     当用户执行删除的动作时，不是使用delete来删除数据，而是使用update来改变数据对应的删除标记。
+
+## 前后端的身份认证
+
+### web开发模式
+
+    目前主流的web开发模式有两种，分别是：
+
+        基于服务端渲染的传统web开发模式
+
+            服务端渲染的概念： 服务器发送给客户端的HTML页面，是在服务器通过字符串拼接，动态生成的。因此，客户端不需要使用AJAX这样的技术额外请求页面的数据
+
+            优点：
+
+                前端耗时少，有利于SEO
+
+            缺点：
+
+                占用服务器资源，不利于前后端分离，开发效率低
+
+        基于前后端分离的新型web开发模式
+
+            前后端分离的概念，前后端分离的开发模式，依赖于ajax技术的广泛应用。后端只负责提供接口，前端使用ajax调用接口的开发模式
+
+            优点：
+
+                开发体验好，用户体验好，减轻服务器端的渲染压力
+
+            缺点：
+
+                不利于SEO（解决方案：利用VUE、REACT等前端框架SSR（server side render）技术能够很好的解决SEO问题）
+
+## 身份认证
+
+    身份认证（Authentication）又称“身份验证”，“鉴权”，是指通过一定的手段，完成对用户身份的确认。
+
+    服务端渲染和前后端分离分别有着不同的身份认证方案：
+
+        服务端渲染推荐使用Session认证机制
+
+        前后端分离推荐使用JWT认证机制
+
+## session认证机制
+
+    HTTP协议的无状态性
+
+        HTTP协议的无状态性值得之客户端的每次请求都是独立的，连续多个请求之间没有直接的关系，服务器不会主动保留每次HTTP请求的状态。
+
+    如何突破HTTP协议的无状态性
+
+        使用cookie就可以突破HTTP的无状态性
+
+    什么是Cookie
+
+        Cookie是存储在浏览器中的一段不超过4KB的字符串，它由一个名称、一个值和其他几个用于控制cookie有效性。安全性、使用范围的可选属性组成。
+
+        不同域名下的Cookie各自独立，每当客户端发起请求时，会自动把当前域名下所有未过期的Cookie一同发送到服务器。
+
+        Cookie的几大特性：
+
+            自动发送、域名独立、过期时限、4KB限制
+
+        Cookie不具有安全性
+
+            由于Cookie时存储在浏览器中的，而且浏览器也提供了读写Cookie的API，因此Cookie很容易被伪造，不具有安全性。因此不建议服务器将重要的因此数据，通过Cookie的形式发送给浏览器。
+
+        提高身份认证的安全性
+
+            使用一个token来进行身份认证
+
+    session的工作原理
+
+        客户端登陆：提交账号密码
+
+        服务器验证账号密码
+
+        服务器生成一个Cookie字符串
+
+        服务器将生成的Cookie相应给客户端
+
+        浏览器自动把Cookie存储在当前域名下
+
+        客户端请求时通过请求头自动把当前域名下所有可用的Cookie发送给服务器
+
+        服务器通过携带的Cookie从内存中查找对应的用户信息
+
+        用户的身份认证辰宫后，服务器针对当前用户生成特定的相应内容
+
+        服务器把当前用户对应的页面内容相应给浏览器
+
+## 在Express中使用Session认证
+
+    安装express-session中间件
+
+```
+    npm install express-session
+```
+
+    引入express-session中间件并注册
+
+```js
+const express = require('express'),
+      session = require('express-session'),
+      mysql = require('mysql'),
+      db = mysql.createPool({
+        host: '127.0.0.1',
+        user: 'root',
+        password: 'admin123',
+        database: 'my_db_01'
+      }),
+      app = express()
+
+      //托管静态页面
+      app.use(express.static('./pages'))
+
+      //解析POST提交过来的表单数据
+      app.use(express.urlencoded({extended: false}))
+
+      app.listen(80,() => {
+        console.log("express server running http://127.0.0.1")
+      })
+```
+
+    想session中存数据
+
+        在express-session中间件配置成功后，即可通过req.session来访为何使用session对象，从而存储用户的关键信息
+
+```js
+const express = require('express'),
+      session = require('express-session'),
+      app = express()
+
+      app.use(session({
+        secret: 'keyboard cat', //secret 属性的值可以为任意字符串
+        resave: false, //固定写法
+        saveUninitialized: true //固定写法
+      }))
+
+      //托管静态页面
+      app.use(express.static('./pages'))
+
+      //解析POST提交过来的表单数据
+      app.use(express.urlencoded({extended: false}))
+
+      app.post('/login',(req,res) => {
+        if(req.body.username !== 'admin' || req.body.password !== '000000'){
+            return res.send({
+                status: 0,
+                msg: "登陆失败！"
+            })
+        }
+        console.log(req.session)
+        req.session.user = req.body //将用户信息存储到session中
+        req.session.isLogin = true //将用户登陆状态，存储到session中
+
+        res.send({
+            status: 1,
+            msg: "登陆成功"
+        })
+      })
+
+      app.get('/userInfo',(req,res) => {
+        console.log(req.session)
+        if(!req.session.isLogin){
+            return res.send({
+                status: 0,
+                msg: "重新登录！"
+            })
+        }
+        res.send({
+            status: 1,
+            data: req.session.user, //可以从req中获取session，session是共享的
+            mes: "获取成功"
+        })
+      })
+
+      app.listen(80,() => {
+        console.log("express server running http://127.0.0.1")
+      })
+```
+
+    如果使用了router(路由),则需要将session挂载到路由上而不是app上
+
+```js
+const express = require('express'),
+      session = require('express-session'),
+      router = express.Router()
+      router.use(session({
+        secret: 'keyboard cat', //secret 属性的值可以为任意字符串
+        resave: false, //固定写法
+        saveUninitialized: true //固定写法
+      }))
+
+      router.post('/login',(req,res) => {
+        if(req.body.username !== 'admin' || req.body.password !== '000000'){
+            return res.send({
+                status: 0,
+                msg: "登陆失败！"
+            })
+        }
+        console.log(req.session)
+        req.session.user = req.body //将用户信息存储到session中
+        req.session.isLogin = true //将用户登陆状态，存储到session中
+
+        res.send({
+            status: 1,
+            msg: "登陆成功"
+        })
+      })
+
+      router.get('/userInfo',(req,res) => {
+        console.log(req.session)
+        if(!req.session.isLogin){
+            return res.send({
+                status: 0,
+                msg: "重新登录！"
+            })
+        }
+        res.send({
+            status: 1,
+            data: req.session.user,
+            mes: "获取成功"
+        })
+      })
+
+module.exports = router
+```
+
+    清空session
+
+        调用req.session.destroy()函数，即可清空服务器保存的session信息。只会清除当前用户的session而不会清除其他用户的
+
+## JWR认证机制
+
+    了解Session认证的局限性
+
+        Session认证机制需要配合Cookie才能实现，由于Cookie默认不支持跨域访问，所以，当涉及到前端跨域请求后端接口的时候，需要做很多额外的配置，才能实现跨域Session认证
+
+        注意： 
+
+        当前端请求接口不存在跨域问题的时候，推荐使用Session认证机制
+
+        当前端需要跨域请求后端接口的时候，不推荐使用Session认证机制，推荐使用JWT认证机制
+
+    什么是JWT
+
+        JWT(英文全称: JSON Web Token)是目前最流行的跨域认证解决方案
+
+    JWT的工作原理
+
+        客户端登陆：提交账号密码
+
+        服务器验证账号密码
+
+        验证通过后，将用户的信息对象，经过加密之后生成Token字符串
+
+        服务器响应：将生成的Token发送给客户端
+
+        客户端将Token存储到缓存之中
+
+        客户端再次发起请求时，通过头的Authorization字段，将token发送给服务器
+
+        服务器把Token字符串还原成用户的信息对象
+
+        用户的身份认证成功后，服务器针对当前用户生成特定的相应内容
+
+        服务器响应：把当前用户对应的页面内容相应给浏览器
+
+    JWT的组成部分
+
+        JWT通常由三部分组成，分别是Header(头部)、Payload(有效和在)、Signature(签名).
+
+        三者之间使用应为的"."分隔,格式如下：
+
+```js
+    Header.Payload.Signature
+```
+        Payload部分才是真正的用户信息，他是用户信息经过加密之后生成的字符串。
+
+        Header和Signatrue时安全性相关的部分，只是为了保证Token的安全性。
+
+    JWT的使用方式
+
+        客户端收到服务器返回的JWT之后，通常会将它存储在localStorage或sessionStorage中。
+
+        此后，客户端每次与服务器通信，都要带上这个JWT的字符串，从而进行身份认证。推荐的做法时把JWT放在HTTP请求头的Authorization字段中，格式如下
+
+## 在Express中使用JWT
+
+    安装JWT相关的包
+
+```
+    npm i jsonwebtoken express-jwt
+```
+
+    jsonwebtoken用于生成JWT字符串
+
+    express-jwt用于将JWT字符串解析还原成JSON对象
+
+    定义secret密钥
+
+        为了保证JWT字符串的安全性，防止JWT字符串在网络传输过程中被别人破解，我们需要专门定义一个用于加密和解密的secret密钥：
+
+            当生成JWT字符串的时候，需要时secret密钥对用户的信息进行加密，最终得到加密好的JWT字符串
+
+            当把JWT子串串解析成还原JSON对象的时候，需要使用secret密钥进行解密
+
+            secret密钥的本质，就是一个字符串
+
+    在登陆成功后生成JWT字符串
+
+    调用jsonwebtoken包提供的sign()方法，将用户的信息加密成JWT字符串，响应给客户端：
+
+```js
+    app.post("/api/login",function(req,res){
+        let userInfo = req.body
+        res.send({
+            result: 1,
+            message: "登陆成功！",
+            data: {
+                //调用jsonwebtoken.sign()生成JWT字符串，三个参数分别是：用户信息对象、加密密钥、配置对象
+                token: jsonwebtoken.sign({username: userInfo.username},serectKey,{expiresIn: '30s'}) //expiresin有效期
+            }
+        })
+    })
+```
+    将JWT字符串还原为JSON对象
+
+        使用app.use()类注册中间件
+
+        expressJWT({secret: secretKey}) 就是用来解析Token的中间件
+
+        .unless({path: [/^\/api\//]}) 用来指定以/api/开头的接口不需要访问权限
+
+```js
+    app.use(expressJwt({secret: secretKey}).unless({path: [/^\/api\//]})) //5.x.x写法
+
+    app.use(expressJwt.expressjwt({secret: secretKey,algorithms: ["HS256"]}).unless({path: [/^\/api\//]})) //6.x.x及以上的写法，algorithms(算法）是必须的
+
+```
+
+    详细可以看npm官网express-jwt介绍：https://www.npmjs.com/package/express-jwt
+
+    使用req.auth获取用户信息
+
+        在express-jwt这个中间件配置成功之后，即可在那些有权限的接口中，使用req.auth对象，来访为从JWT字符串中解析出来的用户信息
+
+    token错误处理中间件
+
+        当使用express-jwt解析Token字符串时，如果客户端发送过来的Token字符串过期或不合法，会产生一个解析失败的错误，影响项目的正常运行。我们可以通过Express的错误中间件，捕获这个错误并进行相关的处理。
+
+```js
+app.use((err,req,res,next) => {
+    if(err.name == 'UnauthorizedError'){
+        return res.send({
+            resutl: 0,
+            message: "token失效！"
+        })
+    }
+    res.send({
+        resutl: 500,
+        message: "未知错误！"
+    })
+})
+```
